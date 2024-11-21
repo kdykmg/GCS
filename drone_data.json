@@ -1,0 +1,1 @@
+{"user_name": "test_user_1", "drone_name": "test_drone_1", "gcs_port": 5555, "server_ip": "117.16.154.226", "server_port": 5555, "video": [true], "speed": [true], "location_latitude": [true], "location_longitude": [true], "altitude": [true], "battery": [true], "yaw": [true], "pitch": [true], "roll": [true]}
