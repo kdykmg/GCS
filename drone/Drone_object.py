@@ -6,7 +6,7 @@ from mavsdk import System
 from mavsdk.offboard import VelocityNedYaw
 from mavsdk.gimbal import GimbalMode, ControlMode
 
-class DRONE_COMMAND:
+class DRONE_OBJECT:
     def __init__(self, command_data_get : Drone_command_data_get.DRONE_COMMAND_DATA_GET) -> None:
         self.command_data_getter : Drone_command_data_get.DRONE_COMMAND_DATA_GET = command_data_get
         self.drone : System
@@ -25,7 +25,12 @@ class DRONE_COMMAND:
         self.gimbal : threading.Event = threading.Event()
         self.gimbal_state : bool = False
         self.arm : threading.Event = threading.Event()
+        self.arming : float = False
         self.takeoff : threading.Event = threading.Event()
+        self.land : threading.Event = threading.Event()
+        self.landing : float = True
+        self.disarm : threading.Event = threading.Event()
+        self.comeback : threading.Event = threading.Event()
         self.forward_speed : float = 2.0
         self.lateral_speed : float = 2.0
         self.vertical_speed : float = 2.0
@@ -48,9 +53,19 @@ class DRONE_COMMAND:
                     self.arm.clear()
                     continue
                 elif key == 'land' and value:
-                    self.arm.set()
+                    self.land.set()
                     await asyncio.sleep(0.1)
-                    self.arm.clear()
+                    self.land.clear()
+                    continue
+                elif key == 'disarm' and value:
+                    self.disarm.set()
+                    await asyncio.sleep(0.1)
+                    self.disarm.clear()
+                    continue
+                elif key == 'comeback' and value:
+                    self.comeback.set()
+                    await asyncio.sleep(0.1)
+                    self.comeback.clear()
                     continue
                 elif key == 'Speed_up' and value:
                     self.forward_speed += 0.5
@@ -92,18 +107,46 @@ class DRONE_COMMAND:
     async def set_gimbal_mode(self) -> None:
         await self.drone.gimbal.take_control(ControlMode.PRIMARY)
         await self.drone.gimbal.set_mode(GimbalMode.YAW_FOLLOW)
+        
+        
+    async def arm_command(self) -> None:
+        while 1:
+            self.arm.wait()
+            if self.landing and not self.arming:
+                await self.drone.action.arm()
+                self.arming = True
+                await asyncio.sleep(1)
+                
+                
+    async def takeoff_command(self) -> None:
+         while 1:
+            self.takeoff.wait()
+            if self.landing and self.arming:
+                await self.drone.action.takeoff()
+                self.landing = False
+                await asyncio.sleep(5)
+                await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+                await self.drone.offboard.start()
+                
     
-    
-    async def arm_and_takeoff(self) -> None:
-        self.arm.wait()
-        await self.drone.action.arm()
-        self.takeoff.wait()
-        await self.drone.action.takeoff()
-        self.arm.clear()    
-        self.takeoff.clear()    
-        await asyncio.sleep(5)
-    
-    
+    async def land_command(self) -> None:
+        while 1:
+            self.land.wait()
+            if not self.control_state and not self.landing:
+                await self.drone.action.land()
+                self.landing = True
+                await asyncio.sleep(5)
+                
+                
+    async def disarm_command(self) -> None:
+        while 1:
+            self.disarm.wait()
+            if self.landing and self.arming:
+                await self.drone.action.disarm()
+                self.arming = False 
+                await asyncio.sleep(1)
+                          
+            
     async def control_gimbal(self) -> None:
         while 1:
             self.arm.wait()
@@ -131,9 +174,7 @@ class DRONE_COMMAND:
         
         
     async def command_main(self) -> None:
+        self.drone = System()
         await self.connect_drone()
         await self.set_gimbal_mode()
-        await self.arm_and_takeoff()
-        await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
-        await self.drone.offboard.start()
-        await asyncio.gather(self.move_drone(), self.control_gimbal(), self.get_command())
+        await asyncio.gather(self.arm_command(),self.takeoff_command(),self.land_command(),self.disarm_command(),self.move_drone(), self.control_gimbal(), self.get_command())

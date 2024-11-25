@@ -4,8 +4,10 @@ import time
 import Drone_init_data
 import Drone_sever_connecter
 import Drone_socket
-#import Drone_command
+#import Drone_object
 import Drone_command_data_get
+import asyncio
+
 
 class DRONE_MAIN:
     def __init__(self) -> None:
@@ -14,7 +16,7 @@ class DRONE_MAIN:
         self.Drone_server_connect : Drone_sever_connecter.DRONE_SERVER_CONNECTER = Drone_sever_connecter.DRONE_SERVER_CONNECTER(self.drone_init_data)
         
         
-    def main(self) -> None:
+    async def main(self) -> None:
         result : List = self.Drone_server_connect.connect_server()
         print(result)
         if result[0] == 'success':
@@ -28,8 +30,7 @@ class DRONE_MAIN:
         result_socket : str = drone_socket.drone_socket_main()
         if result_socket == 'end':
             drone_command_data_get : Drone_command_data_get.DRONE_COMMAND_DATA_GET = Drone_command_data_get.DRONE_COMMAND_DATA_GET(drone_socket)
-            print('1')
-            #drone_command : Drone_command.DRONE_COMMAND = Drone_command.DRONE_COMMAND(drone_command_data_get) 
+            #drone_command : Drone_object.DRONE_OBJECT = Drone_object.DRONE_OBJECT(drone_command_data_get) 
             #await drone_command.command_main()
             while 1:
                 msg : Dict = drone_command_data_get.get_command()
@@ -39,9 +40,11 @@ class DRONE_MAIN:
                         exit()
         else :
             print(result_socket)
-            exit()
+            return
             
-mm=DRONE_MAIN()
-mm.main()
+if __name__ == "__main__":
+
+    drone_main_instance = DRONE_MAIN()
+    asyncio.run(drone_main_instance.main())
 
     

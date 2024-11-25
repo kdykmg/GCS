@@ -26,7 +26,8 @@ class GUI:
         self.frameRows: int = self.frame.shape[0]
         self.frameCols: int = self.frame.shape[1]
         self.auto_state : bool = True
-        self.lock = threading.Lock() 
+        self.message_log : List[str] = ['']
+        self.lock = threading.Lock()
         self.key_state : Dict[str, bool] = self.drone_data.load_drone_command_key_data()
         self.drone_state : Dict[str, float] = dict(
             video=0.0,
@@ -67,11 +68,9 @@ class GUI:
             else:
                 self.show_box_gap[0]=0
                 self.show_box_gap[1]+=90
-        self.s_key : List = ['W','A','S','D','8','4','5','6','7','9','-','+','ex']    
-        
         self.drone_state_chectbox_show : bool = False
         self.drone_state_data_show : bool = False
-        self.set_frame()
+        
             
     def set_frame(self) -> np.ndarray:
         new_frame : np.ndarray = np.zeros((720, 1280, 3), np.uint8)
@@ -93,12 +92,15 @@ class GUI:
     
     def update_drone_state(self) -> None:
         latest_drone_state_data: Dict[str,float] = self.state_data.get_drone_info_streaming()
+        message : str = self.state_data.get_drone_msg_streaming()
         with self.lock:
             for key, value in self.drone_state_chect.items():
                 if value[0]:
                     self.drone_state[key] = latest_drone_state_data[key]
                 else:
                     self.drone_state[key] = 0.0
+            if self.message_log[-1] != message and message !='':
+                self.message_log.append(message)
         if self.auto_state:
             threading.Timer(0.1, self.update_drone_state).start()
             
