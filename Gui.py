@@ -21,7 +21,8 @@ class GUI:
         self.drone_map : Map.MAP = drone_map
         self.not_show_img : np.ndarray = np.zeros((360, 640, 3), np.uint8)
         self.frame : np.ndarray = np.zeros((720, 1280, 3), np.uint8)
-        self.frame[:] = (49, 52, 49)
+        self.key_setting : Dict = self.drone_data.load_key_setting()
+        self.update_frame : np.ndarray = self.set_frame()
         self.frameRows: int = self.frame.shape[0]
         self.frameCols: int = self.frame.shape[1]
         self.auto_state : bool = True
@@ -38,12 +39,18 @@ class GUI:
             pitch=0.0,
             roll=0.0
         )
+        self.key_release : Dict[str,np.ndarray] = {}
+        self.key_push : Dict[str,np.ndarray] = {}
+        for key in self.key_state.keys():
+            if key != 'end':
+                self.key_release[key] = cv2.resize(cv2.imread(f'key_imgs/{key}_release.png'),(120,60) if key == 'arm' or key == 'takeoff' or key == 'land' or key == 'disarm' or key == 'comeback' else (80,50))
+                self.key_push[key] = cv2.resize(cv2.imread(f'key_imgs/{key}_push.png'),(120,60) if key == 'arm' or key == 'takeoff' or key == 'land' or key == 'disarm' or key == 'comeback' else (80,50))
         self.drone_state_chect : Dict[str, List[bool]] ={}
         self.drone_state_chect_data : Dict = self.drone_data.load_drone_state_chect_data()
         for key in self.drone_state.keys():
             self.drone_state_chect[key] = self.drone_state_chect_data[key]
         self.check_box_start_point : List[int] =[1050,30]
-        self.show_box_start_point : List[int] =[640,410]
+        self.show_box_start_point : List[int] =[20,400]
         self.check_box_gap : int = 0
         self.show_box_gap : List[int] = [0,0]
         self.drone_state_chect_box_locate : Dict[str, List[int]] = {}
@@ -55,16 +62,27 @@ class GUI:
             if key== 'video':
                 continue
             self.drone_state_showbox_locate[key] = [self.show_box_start_point[0]+self.show_box_gap[0],self.show_box_start_point[1]+self.show_box_gap[1]]
-            if self.frameCols-self.show_box_start_point[0]-self.show_box_gap[0]-300>0:
-                self.show_box_gap[0] += 140
+            if self.frameCols-self.show_box_start_point[0]-self.show_box_gap[0]-240>0:
+                self.show_box_gap[0] += 160
             else:
                 self.show_box_gap[0]=0
                 self.show_box_gap[1]+=90
-            
+        self.s_key : List = ['W','A','S','D','8','4','5','6','7','9','-','+','ex']    
+        
         self.drone_state_chectbox_show : bool = False
         self.drone_state_data_show : bool = False
-        
-        
+        self.set_frame()
+            
+    def set_frame(self) -> np.ndarray:
+        new_frame : np.ndarray = np.zeros((720, 1280, 3), np.uint8)
+        new_frame[:] = (242, 242, 242)
+        for items in self.key_setting.values():
+            location : tuple = items['location']
+            size : tuple = items['size']
+            new_frame[location[1]:location[1]+size[1],location[0]:location[0]+size[0],:] = items['color']
+        return new_frame
+            
+            
     def save_data(self) -> None:
         self.drone_data.save_data(self.drone_state_chect)
         if self.auto_state:
@@ -100,16 +118,16 @@ class GUI:
         self.update_drone_state()
         while True:
             self.release_all_key()
-            self.frame[:] = (204, 204, 204)
+            self.frame[:] = self.update_frame
             if self.drone_state_chect['video'][0]:
                 img : np.ndarray = self.vid_streaming.get_vid()
             else :
                 img : np.ndarray = self.not_show_img
             if cvui.button(self.frame, 10, 10, img, img, img):
                 pass
-            cvui.rect(self.frame, 8, 8, 642, 362, 0x000000)
+            #cvui.rect(self.frame, 8, 8, 642, 362, 0x000000)
             map_img=self.drone_map.get_map()
-            if cvui.button(self.frame, 660, 10, map_img, map_img, map_img):
+            if cvui.button(self.frame, 670, 10, map_img, map_img, map_img):
                 pass
             if cvui.button(self.frame, 1050, 10, 200, 20, ''):
                 if self.drone_state_chectbox_show:
@@ -122,67 +140,27 @@ class GUI:
                     cvui.checkbox(self.frame, self.drone_state_chect_box_locate[key][0],self.drone_state_chect_box_locate[key][1], key, value, 0xffffff)
             else:
                 cvui.window(self.frame, 1050, 10, 200, 20, 'Information to Display')
-            cvui.rect(self.frame, 4, 400, self.frameCols-8, 314, 0x000000, 0x999999)
+            cvui.rect(self.frame, 4, 390, self.frameCols-8, 314, 0x000000, 0xcccccc)
             for key, value in self.drone_state.items():
                 if key =='video': continue
-                cvui.window(self.frame,self.drone_state_showbox_locate[key][0],self.drone_state_showbox_locate[key][1],120,80,key)
+                cvui.window(self.frame,self.drone_state_showbox_locate[key][0],self.drone_state_showbox_locate[key][1],120,75,key)
                 cvui.text(self.frame,self.drone_state_showbox_locate[key][0]+30,self.drone_state_showbox_locate[key][1]+40,str(value) if self.drone_state_chect[key][0] else '-',1.0)
-            if cvui.button(self.frame, 150, 500, 'W'):
-                self.put_action('W')
-            if cvui.button(self.frame, 100, 540, 'A'):
-                self.put_action('A')
-            if cvui.button(self.frame, 150, 540, 'S'):
-                self.put_action('S')
-            if cvui.button(self.frame, 200, 540, 'D'):
-                self.put_action('D')
-            if cvui.button(self.frame, 400, 500, '8'):
-                self.put_action('Up')
-            if cvui.button(self.frame, 350, 540, '4'):
-                self.put_action('Left')
-            if cvui.button(self.frame, 400, 540, '5'):
-                self.put_action('Down')
-            if cvui.button(self.frame, 450, 540, '6'):
-                self.put_action('Right')
-            if cvui.button(self.frame, 350, 500, '7'):
-                self.put_action('camera_down')
-            if cvui.button(self.frame, 450, 500, '9'):
-                self.put_action('camera_up')
-            if cvui.button(self.frame, 500, 460, '-'):
-                self.put_action('Speed_down')
-            if cvui.button(self.frame, 500, 500, '+'):
-                self.put_action('Speed_up')
-            if cvui.button(self.frame, 100, 450, 'arm'):
-                self.put_action('arm')
-            if cvui.button(self.frame, 200, 450, 'takeoff'):
-                self.put_action('takeoff')
-            if cvui.button(self.frame, 320, 450, 'land'):
-                self.put_action('land')
-                    
-            if keyboard.is_pressed("w"):
-                self.put_action('W')
-            if keyboard.is_pressed("a"):
-                self.put_action('A')
-            if keyboard.is_pressed("s"):
-                self.put_action('S')
-            if keyboard.is_pressed("d"):
-                self.put_action('D')
-            if keyboard.is_pressed("8"):
-                self.put_action('Up')
-            if keyboard.is_pressed("4"):
-                self.put_action('Left')
-            if keyboard.is_pressed("5"):
-                self.put_action('Down')
-            if keyboard.is_pressed("6"):
-                self.put_action('Right')
-            if keyboard.is_pressed("7"):
-                self.put_action('camera_down')
-            if keyboard.is_pressed("9"):
-                self.put_action('camera_up')
-            if keyboard.is_pressed("-"):
-                self.put_action('Speed_down')
-            if keyboard.is_pressed("+"):
-                self.put_action('Speed_up')  
-                
+            
+            for key, items in self.key_setting.items():
+                location : tuple = items['location']
+                p_keyboard : str = items['keyboard']
+                size : tuple = items['size']
+                if size == [120,60] :
+                    if cvui.button(self.frame, location[0], location[1], self.key_release[key],self.key_release[key],self.key_push[key]):
+                        self.put_action(key)
+                else :
+                    if keyboard.is_pressed(p_keyboard):
+                        self.put_action(key)
+                        if cvui.button(self.frame, location[0], location[1], self.key_push[key],self.key_push[key],self.key_push[key]):
+                            pass
+                    else :
+                        if cvui.button(self.frame, location[0], location[1], self.key_release[key],self.key_release[key],self.key_push[key]):
+                            self.put_action(key)    
                 
             self.command_data.command_to_socket(self.key_state)
             cvui.update()

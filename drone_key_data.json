@@ -1,1 +1,1 @@
-{"W": false, "A": false, "S": false, "D": false, "Up": false, "Left": false, "Down": false, "Right": false, "Speed_up": false, "Speed_down": false, "camera_up": false, "camera_down": false, "arm": false, "takeoff": false, "land": false, "end": false}
+{"W": false, "A": false, "S": false, "D": false, "Up": false, "Left": false, "Down": false, "Right": false, "Speed_up": false, "Speed_down": false, "camera_up": false, "camera_down": false, "arm": false, "disarm": false, "comeback": false, "takeoff": false, "land": false, "end": false}

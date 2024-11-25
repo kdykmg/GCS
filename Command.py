@@ -11,7 +11,7 @@ class COMMAND:
         command : Dict[str, bool] =dict()
         for key, value in key_state.items():
             if value != self.key_state_before[key]:
-                if key == 'arm' or key == 'takeoff' or key == 'land':
+                if key == 'arm' or key == 'takeoff' or key == 'land' or key == 'disarm' or key == 'comeback':
                     if value :
                         command[key] = value
                 else:

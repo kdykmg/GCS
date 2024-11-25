@@ -9,7 +9,7 @@ import Drone_command_data_get
 
 class DRONE_MAIN:
     def __init__(self) -> None:
-        self.Drone_init_data :Drone_init_dwwssddqata.DRONE_INIT_DATA = Drone_init_data.DRONE_INIT_DATA()
+        self.Drone_init_data :Drone_init_data.DRONE_INIT_DATA = Drone_init_data.DRONE_INIT_DATA()
         self.drone_init_data : Dict =self.Drone_init_data.load_drone_init_data()
         self.Drone_server_connect : Drone_sever_connecter.DRONE_SERVER_CONNECTER = Drone_sever_connecter.DRONE_SERVER_CONNECTER(self.drone_init_data)
         
@@ -35,6 +35,8 @@ class DRONE_MAIN:
                 msg : Dict = drone_command_data_get.get_command()
                 for i , j in msg.items():
                     print(i,j)
+                    if i == 'end':
+                        exit()
         else :
             print(result_socket)
             exit()

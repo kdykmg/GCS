@@ -16,3 +16,9 @@ class DRONE_STATE:
         latitude : float = drone_state_data['location_latitude']
         longitude : float = drone_state_data['location_longitude']
         return [latitude,longitude]
+    
+    
+    def get_drone_msg_streaming(self) -> str:
+        drone_state_data : Dict = self.streaming_socket.state
+        message : str = drone_state_data['msg']
+        return message

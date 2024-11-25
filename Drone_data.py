@@ -26,10 +26,10 @@ class DRONE_DATA:
             roll=[False]
         )
         self.drone_key_data : Dict = dict()
-        
+        self.key_setting : Dict = dict()
         self.init_load_data()
         self.drone_key_data_load()
-        
+        self.key_setting_load()
         
     def init_load_data(self) -> None:
         with open('drone_data.json','r') as f:
@@ -39,6 +39,16 @@ class DRONE_DATA:
                     self.data_dic[key] = value
             except:
                 print('fail load init data')
+                
+    
+    def key_setting_load(self) -> None:
+        with open('key_setting.json','r') as f:
+            try:
+                loaded_data : Dict= json.load(f)
+                for key, value in loaded_data.items():
+                    self.key_setting[key] = value
+            except:
+                print('fail load key data')
                 
     
     def drone_key_data_load(self) -> None:
@@ -64,5 +74,9 @@ class DRONE_DATA:
     
     def load_drone_command_key_data(self) -> Dict:
         return self.drone_key_data
+    
+    
+    def load_key_setting(self) -> Dict:
+        return self.key_setting
     
     

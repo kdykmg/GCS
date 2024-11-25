@@ -10,6 +10,7 @@ import msvcrt
 import sys
 import Drone_state
 
+
 class MAIN:
     def __init__(self) -> None:
         self.drone_data :Drone_data.DRONE_DATA = Drone_data.DRONE_DATA()
