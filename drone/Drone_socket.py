@@ -1,5 +1,5 @@
 import socket
-from typing import Dict, Tuple, List
+from typing import Dict, List
 import cv2
 import numpy as np
 import time
@@ -19,7 +19,19 @@ class DRONE_SOCKET:
         self.command_que : queue.Queue = queue.Queue(maxsize=3)
         self.error : queue.Queue = queue.Queue(maxsize=3)
         self.cancle : threading.Event = threading.Event()
-        self.lock = threading.Lock() 
+        self.lock = threading.Lock()
+        self.state : Dict = dict(
+            video=0.0,
+            speed=0.0,
+            location_latitude=37.5665,
+            location_longitude=126.9780,
+            altitude=0.0,
+            battery=0.0,
+            yaw=0.0,
+            pitch=0.0,
+            roll=0.0,
+            msg=''
+        )
         
     
     def connect_cancle(self) -> None:
@@ -55,7 +67,7 @@ class DRONE_SOCKET:
     
                 
     def video_streaming(self, video_socket : socket.socket) -> None:
-        '''
+        
         try:
             if self.drone_environment:
                 import video
@@ -85,11 +97,18 @@ class DRONE_SOCKET:
             self.error.put(str(e))
             video_socket.close()
             return
-        '''
-        pass        
+             
     
     def state_streaming(self, state_socket : socket.socket) -> None:
-        pass
+        try:
+            while 1:
+                data = pickle.dumps(self.state)
+                state_socket.sendall(data)
+                time.sleep(0.1)
+        except Exception as e:
+            self.error.put(str(e))
+            state_socket.close()
+            return
     
     
     def drone_socket_main(self) -> str:
@@ -102,7 +121,6 @@ class DRONE_SOCKET:
             thread_list : List[threading.Thread] = []
             for client in connect_list:
                 try:
-                    print(client)
                     client_socket : socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     client_socket.connect((self.gcs_ip, self.gcs_port))
                     client_socket.sendall((client).encode())

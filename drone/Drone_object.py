@@ -1,14 +1,19 @@
 import asyncio
+import math
+import time
 import threading
-from typing import Dict
+import Drone_state_get
+from typing import Dict, List
 import Drone_command_data_get
 from mavsdk import System
 from mavsdk.offboard import VelocityNedYaw
 from mavsdk.gimbal import GimbalMode, ControlMode
 
+
 class DRONE_OBJECT:
-    def __init__(self, command_data_get : Drone_command_data_get.DRONE_COMMAND_DATA_GET) -> None:
+    def __init__(self, command_data_get : Drone_command_data_get.DRONE_COMMAND_DATA_GET, drone_state_stream : Drone_state_get.DRONE_STATE_GET) -> None:
         self.command_data_getter : Drone_command_data_get.DRONE_COMMAND_DATA_GET = command_data_get
+        self.drone_state_stream : Drone_state_get.DRONE_STATE_GET = drone_state_stream
         self.drone : System
         self.W : bool = False #move_forward
         self.S : bool = False #move_backward
@@ -21,7 +26,6 @@ class DRONE_OBJECT:
         self.camera_up : bool = False #gimbal_up
         self.camera_down : bool = False #gimbal_down
         self.control : threading.Event = threading.Event()
-        self.control_state : bool = False
         self.gimbal : threading.Event = threading.Event()
         self.gimbal_state : bool = False
         self.arm : threading.Event = threading.Event()
@@ -31,12 +35,73 @@ class DRONE_OBJECT:
         self.landing : float = True
         self.disarm : threading.Event = threading.Event()
         self.comeback : threading.Event = threading.Event()
+        self.end : threading.Event = threading.Event()
         self.forward_speed : float = 2.0
         self.lateral_speed : float = 2.0
         self.vertical_speed : float = 2.0
         self.current_yaw_angle : float = 0.0
         self.current_gimbal_pitch : float = 0.0
+        self.init_location : List[float] = [0,0,0]
+        self.state : Dict = dict(
+            video=0.0,
+            speed=0.0,
+            location_latitude=37.5665,
+            location_longitude=126.9780,
+            altitude=0.0,
+            battery=0.0,
+            yaw=0.0,
+            pitch=0.0,
+            roll=0.0,
+            msg=''
+        )
+    
+    
+    async def stream_state(self) ->None:
+        while True:
+            self.drone_state_stream.drone_state_stream(self.state)
+            time.sleep(0.1)
         
+        
+    def end_wait(self) -> None:
+        self.end.wait()
+        if not self.landing:
+            self.comeback.set()
+            time.sleep(0.1)
+            self.comeback.clear()
+            while not self.landing:
+                time.sleep(1)
+            self.disarm.set()
+            time.sleep(1)
+            return
+        elif self.arming:
+            self.disarm.set()
+            time.sleep(1)
+            return 
+        return 
+    
+        
+    async def update_drone_state(self) -> None:
+        while True:
+            try:
+                async for pos in self.drone.telemetry.position():
+                    self.state['location_latitude'] = round(pos.latitude_deg, 6)
+                    self.state['location_longitude'] = round(pos.longitude_deg, 6)
+                    self.state['altitude'] = round(pos.relative_altitude_m, 2)
+                    break
+                async for bat in self.drone.telemetry.battery():
+                    self.state['battery'] = round(bat.remaining_percent * 100,2)
+                    break
+                async for att in self.drone.telemetry.attitude_euler():
+                    self.state['yaw'] = round(att.yaw_deg ,2)
+                    self.state['pitch'] = round(att.pitch_deg ,2)
+                    self.state['roll'] = round(att.roll_deg ,2)
+                    break
+                async for vel in self.drone.telemetry.velocity_ned():
+                    self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2 ))
+            except Exception as e:
+                self.state['msg'] = str(e)
+            await asyncio.sleep(0.1)
+            
         
     async def get_command(self) ->None:
         while 1:
@@ -71,10 +136,11 @@ class DRONE_OBJECT:
                     self.forward_speed += 0.5
                     self.lateral_speed += 0.5
                     self.vertical_speed += 0.5
-                elif key == 'Speed_up' and value:
+                elif key == 'Speed_down' and value:
                     self.forward_speed = max(0.5, self.forward_speed - 0.5)
                     self.lateral_speed = max(0.5, self.lateral_speed - 0.5)
-                elif key == 'camera_up' or key == 'camera_up':
+                    self.vertical_speed = max(0.5, self.vertical_speed - 0.5)
+                elif key == 'camera_up' or key == 'camera_down':
                     setattr(self, key, value)
                     if self.camera_up or self.camera_down:
                         if self.gimbal_state == False:
@@ -84,9 +150,10 @@ class DRONE_OBJECT:
                         self.gimbal_state = False
                         self.gimbal.clear()
                 elif key == 'end' :
-                    pass # end 추가
+                    self.end.set()
                 else :
                     setattr(self, key, value)
+                    '''
                     if self.W or  self.S or self.A or self.D or self.Up or self.Down or self.Left or self.Right:
                         if self.control_state == False:
                             self.control.set()
@@ -94,7 +161,7 @@ class DRONE_OBJECT:
                     elif self.control_state == True:
                         self.control_state = False
                         self.control.clear()
-                        
+                    '''
     
     async def connect_drone(self) -> None:
         await self.drone.connect(system_address="udp://:14540")
@@ -125,14 +192,18 @@ class DRONE_OBJECT:
                 await self.drone.action.takeoff()
                 self.landing = False
                 await asyncio.sleep(5)
+                self.init_location = [self.state['location_latitude'],self.state['location_longitude'],self.state['altitude']]
                 await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
                 await self.drone.offboard.start()
+                self.control.set()
                 
     
     async def land_command(self) -> None:
         while 1:
             self.land.wait()
-            if not self.control_state and not self.landing:
+            if not self.landing:
+                self.control.clear()
+                await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
                 await self.drone.action.land()
                 self.landing = True
                 await asyncio.sleep(5)
@@ -145,7 +216,20 @@ class DRONE_OBJECT:
                 await self.drone.action.disarm()
                 self.arming = False 
                 await asyncio.sleep(1)
-                          
+                
+                
+    async def comeback_command(self) -> None:
+        while 1:
+            self.comeback.wait()
+            if not self.landing:
+                self.control.clear()
+                await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+                await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.init_location[2], 0)
+                await asyncio.sleep(1)
+                await self.drone.action.land()
+                self.landing = True
+                await asyncio.sleep(5)
+                
             
     async def control_gimbal(self) -> None:
         while 1:
@@ -162,9 +246,9 @@ class DRONE_OBJECT:
     async def move_drone(self) -> None:
         while 1:
             self.control.wait()
-            forward : float = self.forward_speed if self.W else 0.0 + -self.forward_speed if self.S else 0.0
-            lateral : float = -self.lateral_speed if self.A else 0.0 + self.lateral_speed if self.D else 0.0
-            vertical : float = self.vertical_speed if self.Down else 0.0 + -self.vertical_speed if self.Up else 0.0
+            forward : float = (self.forward_speed if self.W else 0.0) + (-self.forward_speed if self.S else 0.0)
+            lateral : float = (-self.lateral_speed if self.A else 0.0) + (self.lateral_speed if self.D else 0.0)
+            vertical : float = (self.vertical_speed if self.Down else 0.0) + (-self.vertical_speed if self.Up else 0.0)
             if self.Left:
                 self.current_yaw_angle -= 2.0
             if self.Right:
@@ -177,4 +261,13 @@ class DRONE_OBJECT:
         self.drone = System()
         await self.connect_drone()
         await self.set_gimbal_mode()
-        await asyncio.gather(self.arm_command(),self.takeoff_command(),self.land_command(),self.disarm_command(),self.move_drone(), self.control_gimbal(), self.get_command())
+        asyncio.create_task(self.update_drone_state())
+        asyncio.create_task(self.stream_state())
+        asyncio.create_task(self.arm_command())
+        asyncio.create_task(self.takeoff_command())
+        asyncio.create_task(self.land_command())
+        asyncio.create_task(self.disarm_command())
+        asyncio.create_task(self.comeback_command())
+        asyncio.create_task(self.move_drone())
+        asyncio.create_task(self.control_gimbal())
+        asyncio.create_task(self.get_command())
