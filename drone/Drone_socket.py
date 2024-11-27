@@ -5,7 +5,6 @@ import numpy as np
 import time
 import pickle
 import queue
-import Drone_init_data
 import threading
 
 class DRONE_SOCKET:

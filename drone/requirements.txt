@@ -1,0 +1,7 @@
+aiogrpc == 1.8
+asyncio == 3.4.3
+grpcio == 1.68.0
+mavsdk == 2.8.4
+numpy == 2.0.2
+protobuf == 3.20.1
+typing == 3.7.4.3

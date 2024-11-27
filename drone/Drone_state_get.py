@@ -1,9 +1,5 @@
-import asyncio
 from typing import Dict
-from mavsdk import System
-from mavsdk.offboard import VelocityBodyYawspeed
 import Drone_socket
-import math
 
 
 class DRONE_STATE_GET:
