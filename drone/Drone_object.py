@@ -86,26 +86,26 @@ class DRONE_OBJECT:
     
         
     async def update_drone_state(self) -> None:
-        print('update_drone_state started')
+        print('update_drone_state')
         while True:
             try:
-                pos = await self.drone.telemetry.position().__anext__()
-                self.state['location_latitude'] = round(pos.latitude_deg, 6)
-                self.state['location_longitude'] = round(pos.longitude_deg, 6)
-                self.state['altitude'] = round(pos.relative_altitude_m, 2)
-
-                bat = await self.drone.telemetry.battery().__anext__()
-                self.state['battery'] = round(bat.remaining_percent * 100, 2)
-
-                att = await self.drone.telemetry.attitude_euler().__anext__()
-                self.state['yaw'] = round(att.yaw_deg, 2)
-                self.state['pitch'] = round(att.pitch_deg, 2)
-                self.state['roll'] = round(att.roll_deg, 2)
-
-                vel = await self.drone.telemetry.velocity_ned().__anext__()
-                self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2))
+                async for pos in self.drone.telemetry.position():
+                    self.state['location_latitude'] = round(pos.latitude_deg, 6)
+                    self.state['location_longitude'] = round(pos.longitude_deg, 6)
+                    self.state['altitude'] = round(pos.relative_altitude_m, 2)
+                    break
+                async for bat in self.drone.telemetry.battery():
+                    self.state['battery'] = round(bat.remaining_percent * 100,2)
+                    break
+                async for att in self.drone.telemetry.attitude_euler():
+                    self.state['yaw'] = round(att.yaw_deg ,2)
+                    self.state['pitch'] = round(att.pitch_deg ,2)
+                    self.state['roll'] = round(att.roll_deg ,2)
+                    break
+                async for vel in self.drone.telemetry.velocity_ned():
+                    self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2 ))
             except Exception as e:
-                print(f"Error in update_drone_state: {e}")
+                print(str(e))
                 self.state['msg'] = str(e)
             await asyncio.sleep(0.1)
             
