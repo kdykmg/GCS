@@ -103,7 +103,6 @@ class DRONE_SOCKET:
     def state_streaming(self, state_socket : socket.socket) -> None:
         try:
             while 1:
-                print(self.state)
                 data = pickle.dumps(self.state)
                 state_socket.sendall(data)
                 time.sleep(0.1)
