@@ -38,7 +38,7 @@ class DRONE_MAIN:
                     drone_command_data_get : Drone_command_data_get.DRONE_COMMAND_DATA_GET = Drone_command_data_get.DRONE_COMMAND_DATA_GET(drone_socket)
                     drone_command : Drone_object.DRONE_OBJECT = Drone_object.DRONE_OBJECT(drone_command_data_get, drone_state_streamer) 
                     await drone_command.command_main()
-                    drone_command.end_wait()
+                    await drone_command.end_wait()
                     drone_socket.connect_cancle_command()
                     return
                 else :
