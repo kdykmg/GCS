@@ -123,9 +123,9 @@ class DRONE_OBJECT:
                         self.arm.clear()
                         continue
                     elif key == 'takeoff' and value:
-                        self.arm.set()
+                        self.takeoff.set()
                         await asyncio.sleep(0.1)
-                        self.arm.clear()
+                        self.takeoff.clear()
                         continue
                     elif key == 'land' and value:
                         self.land.set()
