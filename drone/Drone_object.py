@@ -221,7 +221,6 @@ class DRONE_OBJECT:
         while not self.end_requested:
             if self.land_requested and not self.landing:
                 self.control_active = False
-                await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
                 await self.drone.action.land()
                 self.landing = True
                 self.land_requested = False
@@ -277,11 +276,12 @@ class DRONE_OBJECT:
                     self.current_yaw_angle -= 2.0
                 if self.Right:
                     self.current_yaw_angle += 2.0
-                
-                await self.drone.offboard.set_velocity_ned(
-                    VelocityNedYaw(forward, lateral, vertical, self.current_yaw_angle)
-                )
+
+                await self.drone.offboard.set_velocity_ned( VelocityNedYaw(forward, lateral, vertical, self.current_yaw_angle) )
+            else :
+                await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
             await asyncio.sleep(0.1)
+            
         
     async def command_main(self) -> None:
         self.drone = System()
