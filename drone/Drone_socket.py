@@ -56,6 +56,7 @@ class DRONE_SOCKET:
                     self.command_que.put(command_message)
         except Exception as e:
             self.error.put(str(e))
+            print(str(e))
             command_socket.close()
             return
         
@@ -94,6 +95,7 @@ class DRONE_SOCKET:
                         video_socket.sendall(frame_byte)
         except Exception as e:
             self.error.put(str(e))
+            print(str(e))
             video_socket.close()
             return
              
@@ -106,6 +108,7 @@ class DRONE_SOCKET:
                 time.sleep(0.1)
         except Exception as e:
             self.error.put(str(e))
+            print(str(e))
             state_socket.close()
             return
     

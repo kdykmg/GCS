@@ -99,6 +99,7 @@ class DRONE_OBJECT:
                 async for vel in self.drone.telemetry.velocity_ned():
                     self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2 ))
             except Exception as e:
+                print(str(e))
                 self.state['msg'] = str(e)
             await asyncio.sleep(0.1)
             
@@ -107,6 +108,7 @@ class DRONE_OBJECT:
         while 1:
             command : Dict = self.command_data_getter.get_command()
             for key, value in command.items():
+                print(key, value)
                 if key == 'arm' and value:
                     self.arm.set()
                     await asyncio.sleep(0.1)

@@ -13,7 +13,7 @@ class DRONE_INIT_DATA:
             drone_name='',
             server_ip='',
             server_port=0,
-            drone_environment=0 # 0: real 1: virtual
+            drone_environment=1 # 0: real 1: virtual
         )
         self.init_load_data()
         
