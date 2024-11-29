@@ -203,19 +203,19 @@ class DRONE_OBJECT:
         while not self.end_requested:
             if self.takeoff_requested and self.landing and self.arming:
                 await self.drone.action.takeoff()
+                await asyncio.sleep(3)
                 self.landing = False
                 self.takeoff_requested = False
-                await asyncio.sleep(5)
+                
                 
                 self.init_location = [
                     self.state['location_latitude'],
                     self.state['location_longitude'],
                     self.state['altitude']
                 ]
-                print('1')
+                print('takeoff success')
                 await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
                 await self.drone.offboard.start()
-                print('2')
                 self.control_active = True
             await asyncio.sleep(0.1)
     
