@@ -130,17 +130,17 @@ class DRONE_SOCKET:
                     if client =='vid':
                         vid_thread : threading.Thread = threading.Thread(target=self.video_streaming, args=(client_socket,))
                         vid_thread.daemon=True
-                        thread_list.append(vid_thread)
+                        self.socket_list.append(client_socket)
                         vid_thread.start()
                     if client =='state':
                         state_thread : threading.Thread = threading.Thread(target=self.state_streaming, args=(client_socket,))
                         state_thread.daemon=True
-                        thread_list.append(state_thread)
+                        self.socket_list.append(client_socket)
                         state_thread.start()
                     if client =='command':
                         command_thread : threading.Thread = threading.Thread(target=self.command_streaming, args=(client_socket,))
                         command_thread.daemon=True
-                        thread_list.append(command_thread)
+                        self.socket_list.append(client_socket)
                         command_thread.start()
                 except Exception as e:
                     return client+' fail '+str(e)

@@ -119,6 +119,7 @@ class DRONE_OBJECT:
                     break
                 async for vel in self.drone.telemetry.velocity_ned():
                     self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2))
+                print()
             except Exception as e:
                 print(str(e))
                 self.state['msg'] = str(e)
@@ -271,7 +272,7 @@ class DRONE_OBJECT:
                 forward: float = (self.forward_speed if self.W else 0.0) + (-self.forward_speed if self.S else 0.0)
                 lateral: float = (-self.lateral_speed if self.A else 0.0) + (self.lateral_speed if self.D else 0.0)
                 vertical: float = (self.vertical_speed if self.Down else 0.0) + (-self.vertical_speed if self.Up else 0.0)
-                
+                print(forward,lateral,vertical)
                 if self.Left:
                     self.current_yaw_angle -= 2.0
                 if self.Right:
