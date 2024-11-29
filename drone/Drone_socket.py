@@ -117,7 +117,7 @@ class DRONE_SOCKET:
         try:
             connect_cancle_thread : threading.Thread = threading.Thread(target=self.connect_cancle)
             connect_cancle_thread.daemon=True
-            connect_cancle_thread.start()
+            #connect_cancle_thread.start()
             
             connect_list : List[str] = ['vid','state','command']
             thread_list : List[threading.Thread] = []
