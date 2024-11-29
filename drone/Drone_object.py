@@ -80,6 +80,7 @@ class DRONE_OBJECT:
     
         
     async def update_drone_state(self) -> None:
+        print('update_drone_state')
         while True:
             try:
                 async for pos in self.drone.telemetry.position():
@@ -104,6 +105,7 @@ class DRONE_OBJECT:
             
         
     async def get_command(self) ->None:
+        print('get_command')
         while 1:
             
             command : Dict = self.command_data_getter.get_command()
