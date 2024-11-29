@@ -55,124 +55,137 @@ class DRONE_OBJECT:
         )
     
     
-    async def stream_state(self) ->None:
+    async def stream_state(self) -> None:
+        print("stream_state started")
         while True:
-            self.drone_state_stream.drone_state_stream(self.state)
-            time.sleep(0.1)
+            try:
+                self.drone_state_stream.drone_state_stream(self.state)
+            except Exception as e:
+                print(f"Error in stream_state: {e}")
+            await asyncio.sleep(0.1)
         
         
     async def end_wait(self) -> None:
+        print("end_wait started")
         await self.end.wait()
+        print("end_wait triggered")
         if not self.landing:
             self.comeback.set()
-            time.sleep(0.1)
+            await asyncio.sleep(0.1)
             self.comeback.clear()
             while not self.landing:
-                time.sleep(1)
+                await asyncio.sleep(1)
             self.disarm.set()
-            time.sleep(1)
+            await asyncio.sleep(1)
             return
         elif self.arming:
             self.disarm.set()
-            time.sleep(1)
-            return 
-        return 
+            await asyncio.sleep(1)
+            return
+        print("end_wait completed")
     
         
     async def update_drone_state(self) -> None:
-        print('update_drone_state')
+        print('update_drone_state started')
         while True:
             try:
-                async for pos in self.drone.telemetry.position():
-                    self.state['location_latitude'] = round(pos.latitude_deg, 6)
-                    self.state['location_longitude'] = round(pos.longitude_deg, 6)
-                    self.state['altitude'] = round(pos.relative_altitude_m, 2)
-                    break
-                async for bat in self.drone.telemetry.battery():
-                    self.state['battery'] = round(bat.remaining_percent * 100,2)
-                    break
-                async for att in self.drone.telemetry.attitude_euler():
-                    self.state['yaw'] = round(att.yaw_deg ,2)
-                    self.state['pitch'] = round(att.pitch_deg ,2)
-                    self.state['roll'] = round(att.roll_deg ,2)
-                    break
-                async for vel in self.drone.telemetry.velocity_ned():
-                    self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2 ))
+                pos = await self.drone.telemetry.position().__anext__()
+                self.state['location_latitude'] = round(pos.latitude_deg, 6)
+                self.state['location_longitude'] = round(pos.longitude_deg, 6)
+                self.state['altitude'] = round(pos.relative_altitude_m, 2)
+
+                bat = await self.drone.telemetry.battery().__anext__()
+                self.state['battery'] = round(bat.remaining_percent * 100, 2)
+
+                att = await self.drone.telemetry.attitude_euler().__anext__()
+                self.state['yaw'] = round(att.yaw_deg, 2)
+                self.state['pitch'] = round(att.pitch_deg, 2)
+                self.state['roll'] = round(att.roll_deg, 2)
+
+                vel = await self.drone.telemetry.velocity_ned().__anext__()
+                self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2))
             except Exception as e:
-                print(str(e))
+                print(f"Error in update_drone_state: {e}")
                 self.state['msg'] = str(e)
             await asyncio.sleep(0.1)
             
         
     async def get_command(self) ->None:
-        print('get_command')
+        print('get_command started')
         while 1:
-            
-            command : Dict = self.command_data_getter.get_command()
-            for key, value in command.items():
-                print(key, value)
-                if key == 'arm' and value:
-                    self.arm.set()
-                    await asyncio.sleep(0.1)
-                    self.arm.clear()
-                    continue
-                elif key == 'takeoff' and value:
-                    self.arm.set()
-                    await asyncio.sleep(0.1)
-                    self.arm.clear()
-                    continue
-                elif key == 'land' and value:
-                    self.land.set()
-                    await asyncio.sleep(0.1)
-                    self.land.clear()
-                    continue
-                elif key == 'disarm' and value:
-                    self.disarm.set()
-                    await asyncio.sleep(0.1)
-                    self.disarm.clear()
-                    continue
-                elif key == 'comeback' and value:
-                    self.comeback.set()
-                    await asyncio.sleep(0.1)
-                    self.comeback.clear()
-                    continue
-                elif key == 'Speed_up' and value:
-                    self.forward_speed += 0.5
-                    self.lateral_speed += 0.5
-                    self.vertical_speed += 0.5
-                elif key == 'Speed_down' and value:
-                    self.forward_speed = max(0.5, self.forward_speed - 0.5)
-                    self.lateral_speed = max(0.5, self.lateral_speed - 0.5)
-                    self.vertical_speed = max(0.5, self.vertical_speed - 0.5)
-                elif key == 'camera_up' or key == 'camera_down':
-                    setattr(self, key, value)
-                    if self.camera_up or self.camera_down:
-                        if self.gimbal_state == False:
-                            self.gimbal.set()
-                            self.gimbal_state = True
-                    elif self.gimbal_state ==True:
-                        self.gimbal_state = False
-                        self.gimbal.clear()
-                elif key == 'end' :
-                    self.end.set()
-                else :
-                    setattr(self, key, value)
-                    '''
-                    if self.W or  self.S or self.A or self.D or self.Up or self.Down or self.Left or self.Right:
-                        if self.control_state == False:
-                            self.control.set()
-                            self.control_state = True
-                    elif self.control_state == True:
-                        self.control_state = False
-                        self.control.clear()
-                    '''
-    
+            try:
+                command : Dict = self.command_data_getter.get_command()
+                for key, value in command.items():
+                    print(f"Command received: {key} = {value}")
+                    if key == 'arm' and value:
+                        self.arm.set()
+                        await asyncio.sleep(0.1)
+                        self.arm.clear()
+                        continue
+                    elif key == 'takeoff' and value:
+                        self.arm.set()
+                        await asyncio.sleep(0.1)
+                        self.arm.clear()
+                        continue
+                    elif key == 'land' and value:
+                        self.land.set()
+                        await asyncio.sleep(0.1)
+                        self.land.clear()
+                        continue
+                    elif key == 'disarm' and value:
+                        self.disarm.set()
+                        await asyncio.sleep(0.1)
+                        self.disarm.clear()
+                        continue
+                    elif key == 'comeback' and value:
+                        self.comeback.set()
+                        await asyncio.sleep(0.1)
+                        self.comeback.clear()
+                        continue
+                    elif key == 'Speed_up' and value:
+                        self.forward_speed += 0.5
+                        self.lateral_speed += 0.5
+                        self.vertical_speed += 0.5
+                    elif key == 'Speed_down' and value:
+                        self.forward_speed = max(0.5, self.forward_speed - 0.5)
+                        self.lateral_speed = max(0.5, self.lateral_speed - 0.5)
+                        self.vertical_speed = max(0.5, self.vertical_speed - 0.5)
+                    elif key == 'camera_up' or key == 'camera_down':
+                        setattr(self, key, value)
+                        if self.camera_up or self.camera_down:
+                            if self.gimbal_state == False:
+                                self.gimbal.set()
+                                self.gimbal_state = True
+                        elif self.gimbal_state ==True:
+                            self.gimbal_state = False
+                            self.gimbal.clear()
+                    elif key == 'end' :
+                        self.end.set()
+                    else :
+                        setattr(self, key, value)
+                        '''
+                        if self.W or  self.S or self.A or self.D or self.Up or self.Down or self.Left or self.Right:
+                            if self.control_state == False:
+                                self.control.set()
+                                self.control_state = True
+                        elif self.control_state == True:
+                            self.control_state = False
+                            self.control.clear()
+                        '''
+            except Exception as e:
+                print(f"Error in get_command: {e}")
+                await asyncio.sleep(0.1)
+                
+                
     async def connect_drone(self) -> None:
+        print("Connecting to drone...")
         await self.drone.connect(system_address="udp://:14540")
         async for state in self.drone.core.connection_state():
-            await asyncio.sleep(1)
+            print(f"Connection state: {state.is_connected}")
             if state.is_connected:
+                print("Drone connected successfully.")
                 break
+            await asyncio.sleep(1)
     
     
     async def set_gimbal_mode(self) -> None:
