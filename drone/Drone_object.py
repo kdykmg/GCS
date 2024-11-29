@@ -107,7 +107,8 @@ class DRONE_OBJECT:
             except Exception as e:
                 print(str(e))
                 self.state['msg'] = str(e)
-            await asyncio.sleep(0.1)
+            await asyncio.sleep(1)
+            print(self.state)
             
         
     async def get_command(self) ->None:
@@ -267,6 +268,7 @@ class DRONE_OBJECT:
             forward : float = (self.forward_speed if self.W else 0.0) + (-self.forward_speed if self.S else 0.0)
             lateral : float = (-self.lateral_speed if self.A else 0.0) + (self.lateral_speed if self.D else 0.0)
             vertical : float = (self.vertical_speed if self.Down else 0.0) + (-self.vertical_speed if self.Up else 0.0)
+            print(forward, lateral, vertical)
             if self.Left:
                 self.current_yaw_angle -= 2.0
             if self.Right:
@@ -290,4 +292,6 @@ class DRONE_OBJECT:
         asyncio.create_task(self.control_gimbal())
         asyncio.create_task(self.get_command())
         print('end wait')
+        while True :
+            time.sleep(10)
         await self.end_wait()
