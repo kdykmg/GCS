@@ -14,7 +14,7 @@ class DRONE_SOCKET:
         self.gcs_port : int = gcs_port
         self.drone_environment : int =  self.drone_init_data['drone_environment']
         self.connect : bool = False
-        self.socket_list : List[socket.socket]
+        self.socket_list : List[socket.socket] = []
         self.command_que : queue.Queue = queue.Queue(maxsize=3)
         self.error : queue.Queue = queue.Queue(maxsize=3)
         self.cancle : threading.Event = threading.Event()
