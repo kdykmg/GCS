@@ -202,7 +202,10 @@ class DRONE_OBJECT:
     async def takeoff_command(self) -> None:
         while not self.end_requested:
             if self.takeoff_requested and self.landing and self.arming:
-                await self.drone.action.takeoff()
+                try:
+                    await asyncio.wait_for(self.drone.action.takeoff(), timeout=10)
+                except asyncio.TimeoutError:
+                    print("Takeoff timed out.")
                 await asyncio.sleep(3)
                 self.landing = False
                 self.takeoff_requested = False
