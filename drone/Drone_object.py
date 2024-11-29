@@ -273,3 +273,5 @@ class DRONE_OBJECT:
         asyncio.create_task(self.move_drone())
         asyncio.create_task(self.control_gimbal())
         asyncio.create_task(self.get_command())
+        print('end wait')
+        await self.end_wait()
