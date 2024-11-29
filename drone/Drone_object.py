@@ -292,6 +292,4 @@ class DRONE_OBJECT:
         asyncio.create_task(self.control_gimbal())
         asyncio.create_task(self.get_command())
         print('end wait')
-        while True :
-            time.sleep(10)
         await self.end_wait()
