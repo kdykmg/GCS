@@ -152,6 +152,7 @@ class DRONE_OBJECT:
                         self.vertical_speed = max(0.5, self.vertical_speed - 0.5)
                     elif key == 'camera_up' or key == 'camera_down':
                         setattr(self, key, value)
+                        print(self.camera_up, self.camera_down)
                         if self.camera_up or self.camera_down:
                             if self.gimbal_state == False:
                                 self.gimbal.set()
