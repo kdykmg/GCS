@@ -212,9 +212,10 @@ class DRONE_OBJECT:
                     self.state['location_longitude'],
                     self.state['altitude']
                 ]
-                
+                print('1')
                 await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
                 await self.drone.offboard.start()
+                print('2')
                 self.control_active = True
             await asyncio.sleep(0.1)
     
