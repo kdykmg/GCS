@@ -103,17 +103,14 @@ class DRONE_OBJECT:
                 if self.end:
                     break
                 async for pos in self.drone.telemetry.position():
-                    print('pos')
                     self.state['location_latitude'] = round(pos.latitude_deg, 6)
                     self.state['location_longitude'] = round(pos.longitude_deg, 6)
                     self.state['altitude'] = round(pos.relative_altitude_m, 2)
                     break
                 async for bat in self.drone.telemetry.battery():
-                    print('bat')
                     self.state['battery'] = round(bat.remaining_percent * 100,2)
                     break
                 async for att in self.drone.telemetry.attitude_euler():
-                    print('att')
                     self.state['yaw'] = round(att.yaw_deg ,2)
                     self.state['pitch'] = round(att.pitch_deg ,2)
                     self.state['roll'] = round(att.roll_deg ,2)
