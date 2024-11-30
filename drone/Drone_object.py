@@ -120,6 +120,7 @@ class DRONE_OBJECT:
                     break
                 async for vel in self.drone.telemetry.velocity_ned():
                     self.state['speed'] = round(math.sqrt(vel.north_m_s**2 + vel.east_m_s**2 + vel.down_m_s**2 ))
+                    break
             except Exception as e:
                 print(str(e))
                 self.state['msg'] = str(e)
@@ -164,7 +165,7 @@ class DRONE_OBJECT:
                     self.control = True
                     print('takeoff')
                     continue
-                if not self.landing and  not self.arming and self.land :
+                if not self.landing and self.arming and self.land :
                     self.control =False
                     await self.drone.action.land()
                     self.landing = True
@@ -175,7 +176,7 @@ class DRONE_OBJECT:
                     self.arming = False 
                     await asyncio.sleep(1)
                     print('disarm')
-                if not self.landing and  not self.arming and self.comeback :
+                if not self.landing and self.arming and self.comeback :
                     self.control = False
                     await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
                     await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.init_location[2], 0)
@@ -190,6 +191,7 @@ class DRONE_OBJECT:
                     if self.camera_down:
                         self.current_gimbal_pitch -= 2.0
                     self.current_gimbal_pitch = max(-90.0, min(30.0, self.current_gimbal_pitch))
+                    await self.drone.gimbal.set_pitch_and_yaw(self.current_gimbal_pitch, 0.0)
                 if self.control :
                     forward : float = (self.forward_speed if self.W else 0.0) + (-self.forward_speed if self.S else 0.0)
                     lateral : float = (-self.lateral_speed if self.A else 0.0) + (self.lateral_speed if self.D else 0.0)
