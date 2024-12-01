@@ -61,6 +61,7 @@ class DRONE_OBJECT:
         while True:
             try:
                 self.drone_state_stream.drone_state_stream(self.state)
+                exit()
             except Exception as e:
                 print(f"Error in stream_state: {e}")  
             time.sleep(0.1)
@@ -73,6 +74,7 @@ class DRONE_OBJECT:
                 command : Dict = self.command_data_getter.get_command()
                 for key, value in command.items():
                     if key == 'end' :
+                        self.drone_socket.connect_cancle_command()
                         self.control = False
                         self.end = True
                         time.sleep(1)
@@ -103,8 +105,7 @@ class DRONE_OBJECT:
         while True:
             try:
                 if self.end:
-                    self.drone_socket.connect_cancle_command()
-                    exit()
+                    return
                 async for pos in self.drone.telemetry.position():
                     self.state['location_latitude'] = round(pos.latitude_deg, 6)
                     self.state['location_longitude'] = round(pos.longitude_deg, 6)
@@ -210,9 +211,9 @@ class DRONE_OBJECT:
                         current_yaw_angle = 30.0
                     if self.Left or self.Right:
                     '''
-                    vertical : float = (self.forward_speed if self.W else 0.0) + (-self.forward_speed if self.S else 0.0)
+                    vertical : float = (self.forward_speed if self.S else 0.0) + (-self.forward_speed if self.W else 0.0)
                     lateral : float = (-self.lateral_speed if self.Left else 0.0) + (self.lateral_speed if self.Right else 0.0)
-                    forward : float = (self.vertical_speed if self.Down else 0.0) + (-self.vertical_speed if self.Up else 0.0)
+                    forward : float = (self.vertical_speed if self.Up else 0.0) + (-self.vertical_speed if self.Down else 0.0)
                     if self.A:
                         current_yaw_angle = -30.0
                     if self.D:
