@@ -109,12 +109,7 @@ class DRONE_SOCKET:
     
     def drone_socket_main(self) -> str:
         try:
-            connect_cancle_thread : threading.Thread = threading.Thread(target=self.connect_cancle)
-            connect_cancle_thread.daemon=True
-            #connect_cancle_thread.start()
-            
             connect_list : List[str] = ['vid','state','command']
-            thread_list : List[threading.Thread] = []
             for client in connect_list:
                 try:
                     client_socket : socket.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
