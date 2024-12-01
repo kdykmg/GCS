@@ -178,8 +178,8 @@ class DRONE_OBJECT:
                     await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
                     await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.init_location[2], 0)
                     while True :
-                        if abs(self.state['location_latitude'] - self.init_location[0]) < 0.00001 and \
-                        abs(self.state['location_longitude'] - self.init_location[1]) < 0.00001 and \
+                        if abs(self.state['location_latitude'] - self.init_location[0]) < 0.000001 and \
+                        abs(self.state['location_longitude'] - self.init_location[1]) < 0.000001 and \
                         abs(self.state['altitude'] - self.init_location[2]) < 0.5:
                             await self.drone.action.land()
                             break

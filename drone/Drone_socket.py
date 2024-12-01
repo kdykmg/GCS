@@ -32,17 +32,11 @@ class DRONE_SOCKET:
             msg=''
         )
         
-    
-    def connect_cancle(self) -> None:
-        self.cancle.wait()
-        for s in self.socket_list:
-            s.close()
-        self.cancle.clear()
-        
         
     def connect_cancle_command(self) -> None:
-        self.cancle.set()  
-         
+        for s in self.socket_list:
+            s.close()
+        
         
     def command_streaming(self, command_socket : socket.socket) -> None:
         try:
