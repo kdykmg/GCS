@@ -158,7 +158,7 @@ class DRONE_OBJECT:
                     await asyncio.sleep(5)
                     self.init_location = [self.state['location_latitude'],self.state['location_longitude'],self.state['altitude']]
                     await self.set_gimbal_mode()
-                    await self.drone.offboard.set_velocity_ned(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
+                    await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
                     await self.drone.offboard.start()
                     self.control = True
                     self.state['msg'] = 'takeoff success'
@@ -176,7 +176,7 @@ class DRONE_OBJECT:
                     self.state['msg'] = 'disarm success'
                 if not self.landing and self.arming and self.comeback :
                     self.control = False
-                    await self.drone.offboard.set_velocity_ned(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
+                    await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
                     await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.init_location[2], 0)
                     await asyncio.sleep(1)
                     await self.drone.action.land()
@@ -199,14 +199,14 @@ class DRONE_OBJECT:
                     if self.Right:
                         self.current_yaw_angle += 2.0
                     if self.Left or self.Right:
-                        await self.drone.offboard.set_velocity_ned(VelocityBodyYawspeed(forward, lateral, vertical, self.current_yaw_angle))
+                        await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(forward, lateral, vertical, self.current_yaw_angle))
                     else :
-                        await self.drone.offboard.set_velocity_ned(VelocityBodyYawspeed(forward, lateral, vertical, 0.0))
+                        await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(forward, lateral, vertical, 0.0))
                 if self.control:
                     if self.W or self.S or self.A or self.D or self.Left or self.Right or self.Down or self.Up :
                         pass
                     else :
-                        await self.drone.offboard.set_velocity_ned(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
+                        await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
             except Exception as e:
                 print(str(e))
                 self.state['msg'] = str(e)
