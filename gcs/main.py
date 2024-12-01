@@ -72,6 +72,7 @@ class MAIN:
         gcs_gui : Gui.GUI = Gui.GUI(drone_socket, drone_data, command_to_socket_def, Drone_state_stream,Drone_map_stream)
         return_code : str = gcs_gui.gui_main()
         if return_code =='end':
+            time.sleep(1)
             drone_socket.connect_cancle_command()
             
             

@@ -38,7 +38,6 @@ class DRONE_OBJECT:
         self.forward_speed : float = 2.0
         self.lateral_speed : float = 2.0
         self.vertical_speed : float = 2.0
-        self.current_yaw_angle : float = 0.0
         self.current_gimbal_pitch : float = 0.0
         self.init_location : List[float] = [0,0,0]
         self.state : Dict = dict(
@@ -178,6 +177,12 @@ class DRONE_OBJECT:
                     self.control = False
                     await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
                     await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.init_location[2], 0)
+                    while True :
+                        if abs(self.state['location_latitude'] - self.init_location[0]) < 0.00001 and \
+                        abs(self.state['location_longitude'] - self.init_location[1]) < 0.00001 and \
+                        abs(self.state['altitude'] - self.init_location[2]) < 0.5:
+                            break
+                        await asyncio.sleep(1)
                     await asyncio.sleep(1)
                     await self.drone.action.land()
                     self.landing = True
@@ -195,11 +200,11 @@ class DRONE_OBJECT:
                     lateral : float = (-self.lateral_speed if self.A else 0.0) + (self.lateral_speed if self.D else 0.0)
                     vertical : float = (self.vertical_speed if self.Down else 0.0) + (-self.vertical_speed if self.Up else 0.0)
                     if self.Left:
-                        self.current_yaw_angle -= 2.0
+                        current_yaw_angle = -4.0
                     if self.Right:
-                        self.current_yaw_angle += 2.0
+                        current_yaw_angle = 4.0
                     if self.Left or self.Right:
-                        await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(forward, lateral, vertical, self.current_yaw_angle))
+                        await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(forward, lateral, vertical, current_yaw_angle))
                     else :
                         await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(forward, lateral, vertical, 0.0))
                 if self.control:
