@@ -149,7 +149,7 @@ class DRONE_OBJECT:
                     await self.drone.action.arm()
                     self.arming = True
                     await asyncio.sleep(1)
-                    print('arm')
+                    self.state['msg'] = 'arm success'
                     continue
                 if self.landing and self.arming and self.takeoff :
                     await self.drone.action.takeoff()
@@ -160,19 +160,19 @@ class DRONE_OBJECT:
                     await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
                     await self.drone.offboard.start()
                     self.control = True
-                    print('takeoff')
+                    self.state['msg'] = 'takeoff success'
                     continue
                 if not self.landing and self.arming and self.land :
                     self.control =False
                     await self.drone.action.land()
                     self.landing = True
                     await asyncio.sleep(5)
-                    print('land')
+                    self.state['msg'] = 'land success'
                 if self.landing and self.arming and self.disarm :
                     await self.drone.action.disarm()
                     self.arming = False 
                     await asyncio.sleep(1)
-                    print('disarm')
+                    self.state['msg'] = 'disarm success'
                 if not self.landing and self.arming and self.comeback :
                     self.control = False
                     await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
@@ -181,7 +181,7 @@ class DRONE_OBJECT:
                     await self.drone.action.land()
                     self.landing = True
                     await asyncio.sleep(5)
-                    print('comback')
+                    self.state['msg'] = 'comeback success'
                 if self.camera_up or self.camera_down:
                     if self.camera_up :
                         self.current_gimbal_pitch += 2.0

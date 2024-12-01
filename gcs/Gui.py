@@ -146,8 +146,16 @@ class GUI:
             for key, value in self.drone_state.items():
                 if key =='video': continue
                 cvui.window(self.frame,self.drone_state_showbox_locate[key][0],self.drone_state_showbox_locate[key][1],120,75,key)
-                cvui.text(self.frame,self.drone_state_showbox_locate[key][0]+30,self.drone_state_showbox_locate[key][1]+40,str(value) if self.drone_state_chect[key][0] else '-',1.0)
-            
+                cvui.text(self.frame,self.drone_state_showbox_locate[key][0]+10,self.drone_state_showbox_locate[key][1]+40,str(value) if self.drone_state_chect[key][0] else '-',0.5)
+            cvui.window(self.frame, 980, 490, 280, 120, 'message')
+            message : str = self.state_data.get_drone_msg_streaming()
+            new_message : str =''
+            for i in range(len(message)) :
+                if i %20 == 0 :
+                    new_message = new_message + message[i] +'\n'
+                else :
+                    new_message = new_message + message[i]
+            cvui.text(self.frame,1000, 500,new_message,0.5)
             for key, items in self.key_setting.items():
                 location : tuple = items['location']
                 p_keyboard : str = items['keyboard']
@@ -163,7 +171,7 @@ class GUI:
                     else :
                         if cvui.button(self.frame, location[0], location[1], self.key_release[key],self.key_release[key],self.key_push[key]):
                             self.put_action(key)    
-                
+            
             self.command_data.command_to_socket(self.key_state)
             cvui.update()
             cv2.imshow(self.WINDOW_NAME, self.frame)
