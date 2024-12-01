@@ -2,6 +2,7 @@ import asyncio
 import math
 import time
 import Drone_state_get
+import Drone_socket
 import threading
 from typing import Dict, List
 import Drone_command_data_get
@@ -11,9 +12,10 @@ from mavsdk.gimbal import GimbalMode, ControlMode
 
 
 class DRONE_OBJECT:
-    def __init__(self, command_data_get : Drone_command_data_get.DRONE_COMMAND_DATA_GET, drone_state_stream : Drone_state_get.DRONE_STATE_GET) -> None:
+    def __init__(self, command_data_get : Drone_command_data_get.DRONE_COMMAND_DATA_GET, drone_state_stream : Drone_state_get.DRONE_STATE_GET, drone_socket : Drone_socket.DRONE_SOCKET) -> None:
         self.command_data_getter : Drone_command_data_get.DRONE_COMMAND_DATA_GET = command_data_get
         self.drone_state_stream : Drone_state_get.DRONE_STATE_GET = drone_state_stream
+        self.drone_socket : Drone_socket.DRONE_SOCKET = drone_socket
         self.drone : System
         self.W : bool = False #move_forward
         self.S : bool = False #move_backward
@@ -144,6 +146,7 @@ class DRONE_OBJECT:
         while True:
             try:
                 if self.end:
+                    self.drone_socket.connect_cancle_command()
                     return
                 if self.landing and not self.arming and self.arm :
                     await self.drone.action.arm()
@@ -178,15 +181,17 @@ class DRONE_OBJECT:
                     await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
                     await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.init_location[2], 0)
                     while True :
-                        if abs(self.state['location_latitude'] - self.init_location[0]) < 0.000001 and \
-                        abs(self.state['location_longitude'] - self.init_location[1]) < 0.000001 and \
+                        if abs(self.state['location_latitude'] - self.init_location[0]) < 0.0000001 and \
+                        abs(self.state['location_longitude'] - self.init_location[1]) < 0.0000001 and \
                         abs(self.state['altitude'] - self.init_location[2]) < 0.5:
                             await self.drone.action.land()
                             break
                         await asyncio.sleep(1)
+                        
                     await asyncio.sleep(1)
                     self.landing = True
                     await asyncio.sleep(5)
+                    
                     self.state['msg'] = 'comeback success'
                 if self.camera_up or self.camera_down:
                     if self.camera_up :
