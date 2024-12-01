@@ -211,6 +211,7 @@ class DRONE_OBJECT:
                         current_yaw_angle = 30.0
                     if self.Left or self.Right:
                     '''
+                    # 임시 반드시 수정 필요
                     vertical : float = (self.forward_speed if self.S else 0.0) + (-self.forward_speed if self.W else 0.0)
                     lateral : float = (-self.lateral_speed if self.Left else 0.0) + (self.lateral_speed if self.Right else 0.0)
                     forward : float = (self.vertical_speed if self.Up else 0.0) + (-self.vertical_speed if self.Down else 0.0)
@@ -246,4 +247,4 @@ class DRONE_OBJECT:
             await asyncio.gather(self.update_drone_state(), self.drone_action())
         except asyncio.CancelledError:
             self.drone_socket.connect_cancle_command()
-            return
+            exit()
