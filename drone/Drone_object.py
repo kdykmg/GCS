@@ -103,6 +103,7 @@ class DRONE_OBJECT:
         while True:
             try:
                 if self.end:
+                    self.drone_socket.connect_cancle_command()
                     return
                 async for pos in self.drone.telemetry.position():
                     self.state['location_latitude'] = round(pos.latitude_deg, 6)
@@ -146,7 +147,6 @@ class DRONE_OBJECT:
         while True:
             try:
                 if self.end:
-                    self.drone_socket.connect_cancle_command()
                     return
                 if self.landing and not self.arming and self.arm :
                     await self.drone.action.arm()
@@ -179,11 +179,10 @@ class DRONE_OBJECT:
                 if not self.landing and self.arming and self.comeback :
                     self.control = False
                     await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(0.0, 0.0, 0.0, 0.0))
-                    await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.init_location[2], 0)
+                    await self.drone.action.goto_location(self.init_location[0], self.init_location[1], self.state['altitude'], 0)
                     while True :
-                        if abs(self.state['location_latitude'] - self.init_location[0]) < 0.0000001 and \
-                        abs(self.state['location_longitude'] - self.init_location[1]) < 0.0000001 and \
-                        abs(self.state['altitude'] - self.init_location[2]) < 0.5:
+                        if abs(self.state['location_latitude'] - self.init_location[0]) < 0.000001 and \
+                        abs(self.state['location_longitude'] - self.init_location[1]) < 0.000001 :
                             await self.drone.action.land()
                             break
                         await asyncio.sleep(1)
