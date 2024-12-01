@@ -104,7 +104,7 @@ class DRONE_OBJECT:
             try:
                 if self.end:
                     self.drone_socket.connect_cancle_command()
-                    return
+                    exit()
                 async for pos in self.drone.telemetry.position():
                     self.state['location_latitude'] = round(pos.latitude_deg, 6)
                     self.state['location_longitude'] = round(pos.longitude_deg, 6)
