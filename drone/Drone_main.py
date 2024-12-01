@@ -6,7 +6,6 @@ import Drone_object
 import Drone_command_data_get
 import asyncio
 import Drone_state_get
-import threading
 
 
 class DRONE_MAIN:
