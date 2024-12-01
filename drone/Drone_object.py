@@ -61,7 +61,6 @@ class DRONE_OBJECT:
         while True:
             try:
                 self.drone_state_stream.drone_state_stream(self.state)
-                exit()
             except Exception as e:
                 print(f"Error in stream_state: {e}")  
             time.sleep(0.1)
@@ -74,10 +73,11 @@ class DRONE_OBJECT:
                 command : Dict = self.command_data_getter.get_command()
                 for key, value in command.items():
                     if key == 'end' :
-                        self.drone_socket.connect_cancle_command()
                         self.control = False
                         self.end = True
-                        time.sleep(1)
+                        for task in asyncio.all_tasks():
+                            task.cancel()
+                            break
                     elif key == 'arm' or key == 'takeoff' or key == 'land' or key == 'disarm' or key == 'comeback' and value:
                         setattr(self, key, value)
                         time.sleep(1)
@@ -242,4 +242,8 @@ class DRONE_OBJECT:
         state_thread : threading.Thread = threading.Thread(target=self.stream_state)
         state_thread.daemon=True
         state_thread.start()
-        await asyncio.gather(self.update_drone_state(), self.drone_action())
+        try:
+            await asyncio.gather(self.update_drone_state(), self.drone_action())
+        except asyncio.CancelledError:
+            self.drone_socket.connect_cancle_command()
+            return
