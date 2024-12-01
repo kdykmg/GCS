@@ -149,13 +149,16 @@ class GUI:
                 cvui.text(self.frame,self.drone_state_showbox_locate[key][0]+10,self.drone_state_showbox_locate[key][1]+40,str(value) if self.drone_state_chect[key][0] else '-',0.5)
             cvui.window(self.frame, 980, 490, 280, 120, 'message')
             message : str = self.state_data.get_drone_msg_streaming()
-            new_message : str =''
+            new_message : List =['']
+            k : int = 0
             for i in range(len(message)) :
                 if i %20 == 0 :
-                    new_message = new_message + message[i] +'\n'
+                    k +=1
+                    new_message.append(message[i])
                 else :
-                    new_message = new_message + message[i]
-            cvui.text(self.frame,1000, 500,new_message,0.5)
+                    new_message[k] = new_message[k] + message[i]
+            for i in range(k) :
+                cvui.text(self.frame,1000, 500+ k*10,new_message[k],0.5)
             for key, items in self.key_setting.items():
                 location : tuple = items['location']
                 p_keyboard : str = items['keyboard']
