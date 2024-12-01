@@ -6,7 +6,7 @@ import threading
 from typing import Dict, List
 import Drone_command_data_get
 from mavsdk import System
-from mavsdk.offboard import VelocityNedYaw
+from mavsdk.offboard import OffboardError, VelocityBodyYawspeed
 from mavsdk.gimbal import GimbalMode, ControlMode
 
 
@@ -199,9 +199,9 @@ class DRONE_OBJECT:
                     if self.Right:
                         self.current_yaw_angle += 2.0
                     if self.Left or self.Right:
-                        await self.drone.offboard.set_velocity_ned(VelocityNedYaw(forward, lateral, vertical, self.current_yaw_angle))
+                        await self.drone.offboard.set_velocity_ned(VelocityBodyYawspeed(forward, lateral, vertical, self.current_yaw_angle))
                     else :
-                        await self.drone.offboard.set_velocity_ned(VelocityNedYaw(forward, lateral, vertical, 0.0))
+                        await self.drone.offboard.set_velocity_ned(VelocityBodyYawspeed(forward, lateral, vertical, 0.0))
                 if self.control:
                     if self.W or self.S or self.A or self.D or self.Left or self.Right or self.Down or self.Up :
                         pass
