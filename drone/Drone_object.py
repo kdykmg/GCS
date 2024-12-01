@@ -200,6 +200,7 @@ class DRONE_OBJECT:
                     self.current_gimbal_pitch = max(-90.0, min(30.0, self.current_gimbal_pitch))
                     await self.drone.gimbal.set_pitch_and_yaw(self.current_gimbal_pitch, 0.0)
                 if self.control :
+                    '''
                     forward : float = (self.forward_speed if self.W else 0.0) + (-self.forward_speed if self.S else 0.0)
                     lateral : float = (-self.lateral_speed if self.A else 0.0) + (self.lateral_speed if self.D else 0.0)
                     vertical : float = (self.vertical_speed if self.Down else 0.0) + (-self.vertical_speed if self.Up else 0.0)
@@ -208,6 +209,15 @@ class DRONE_OBJECT:
                     if self.Right:
                         current_yaw_angle = 30.0
                     if self.Left or self.Right:
+                    '''
+                    vertical : float = (self.forward_speed if self.W else 0.0) + (-self.forward_speed if self.S else 0.0)
+                    lateral : float = (-self.lateral_speed if self.Left else 0.0) + (self.lateral_speed if self.Right else 0.0)
+                    forward : float = (self.vertical_speed if self.Down else 0.0) + (-self.vertical_speed if self.Up else 0.0)
+                    if self.A:
+                        current_yaw_angle = -30.0
+                    if self.D:
+                        current_yaw_angle = 30.0
+                    if self.A or self.D:
                         await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(forward, lateral, vertical, current_yaw_angle))
                     else :
                         await self.drone.offboard.set_velocity_body(VelocityBodyYawspeed(forward, lateral, vertical, 0.0))
