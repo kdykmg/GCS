@@ -35,6 +35,7 @@ class DRONE_OBJECT:
         self.disarm : bool = False
         self.comeback : bool = False
         self.end : bool = False
+        self.moving : bool = False
         self.forward_speed : float = 2.0
         self.lateral_speed : float = 2.0
         self.vertical_speed : float = 2.0
@@ -70,6 +71,7 @@ class DRONE_OBJECT:
         while True:
             try:
                 command : Dict = self.command_data_getter.get_command()
+                m : bool = False
                 for key, value in command.items():
                     if key == 'end' :
                         self.control = False
@@ -90,8 +92,12 @@ class DRONE_OBJECT:
                         self.vertical_speed = max(0.5, self.vertical_speed - 0.5)
                         time.sleep(0.1)
                     else :
+                        m = True
+                        self.moving = True
                         setattr(self, key, value)
                         time.sleep(0.1)
+                if not m :
+                    self.moving = False
             except Exception as e:
                 print(f"Error in get_command: {e}")
                 
@@ -143,6 +149,9 @@ class DRONE_OBJECT:
     async def drone_action(self) -> None:
         while True:
             try:
+                async for flight_mode in self.drone.telemetry.flight_mode():
+                    print(f"Current flight mode: {flight_mode}")
+                    break
                 if self.end:
                     break
                 if self.landing and not self.arming and self.arm :
@@ -198,8 +207,8 @@ class DRONE_OBJECT:
                     if self.Right:
                         self.current_yaw_angle += 2.0
                     await self.drone.offboard.set_velocity_ned(VelocityNedYaw(forward, lateral, vertical, self.current_yaw_angle))
-                elif not self.landing:
-                    await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))  
+                if self.control and not self.moving:
+                    await self.drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
             except Exception as e:
                 print(str(e))
                 self.state['msg'] = str(e)
