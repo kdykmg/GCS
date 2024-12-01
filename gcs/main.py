@@ -21,7 +21,7 @@ class MAIN:
         self.gcs_port : str = str(self.drone_init_data['gcs_port'])
         self.server : Server.SERVER = Server.SERVER(self.drone_data)
 
-        
+
     def input_data(self, prompt : str, default : str) -> str:
         print(prompt, end='', flush=True)
         sys.stdout.write(default)
